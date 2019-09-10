@@ -1,3 +1,4 @@
+// Package mediawiki is a wrapper around MediaWiki's API.
 package mediawiki
 
 import (
@@ -8,6 +9,7 @@ import (
 	"strings"
 )
 
+// UpdatePage updates the content of the page.
 func UpdatePage(mwURI, title, markup, contentModel, loginName, loginPass, sectionTitle string) (bool, error) {
 	u := fmt.Sprintf("%s/api.php?action=parse&format=json&page=%s&prop=sections", mwURI, title)
 	resp, err := http.Get(u)
@@ -81,23 +83,7 @@ func UpdatePage(mwURI, title, markup, contentModel, loginName, loginPass, sectio
 		return false, fmt.Errorf("bad HTTP status")
 	}
 
-	// ndata := struct {
-	// 	Edit struct {
-	// 		Result   string
-	// 		OldRevID int
-	// 		NewRevID int
-	// 	}
-	// }{}
-	// if err = json.NewDecoder(resp.Body).Decode(&ndata); err != nil {
-	// 	return false, err
-	// }
-	// ok = ndata.Edit.Result == "Success"
-	// if !ok {
-	// 	err = fmt.Errorf("UpdateProfilePage: error response: %+v", ndata)
-	// }
-
 	// interpreting results, extract errors and the success message
-	// using a map
 	{
 		data := map[string]interface{}{}
 		if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
@@ -119,6 +105,7 @@ func UpdatePage(mwURI, title, markup, contentModel, loginName, loginPass, sectio
 	return true, nil
 }
 
+// GetToken returns a token, auth cookies and error.
 func GetToken(mwURI, tokenType string, cookies []*http.Cookie) (string, []*http.Cookie, error) {
 	u := fmt.Sprintf("%s/api.php?action=query&format=json&meta=tokens&type=%s", mwURI, tokenType)
 
@@ -175,6 +162,7 @@ func GetToken(mwURI, tokenType string, cookies []*http.Cookie) (string, []*http.
 	return token, resp.Cookies(), nil
 }
 
+// Login logins a user given a name and pass and returns a success status, auth cookies and error.
 func Login(mwURI, name, pass string) (bool, []*http.Cookie, error) {
 	var ok bool
 
@@ -229,6 +217,7 @@ func Login(mwURI, name, pass string) (bool, []*http.Cookie, error) {
 	return true, resp.Cookies(), err
 }
 
+// Purge cleans the cache for specified pages.
 func Purge(mwURI string, pageTitles ...string) error {
 	u := fmt.Sprintf("%s/api.php?action=purge&format=json&titles=%s", mwURI, strings.Join(pageTitles, "|"))
 
@@ -264,6 +253,7 @@ func Purge(mwURI string, pageTitles ...string) error {
 	return err
 }
 
+// GetCategoryMembers returns a list of users who belong to the specified category.
 func GetCategoryMembers(mwURI, category string) ([]string, error) {
 	// getting users with the category
 	u := fmt.Sprintf("%s/api.php?action=query&format=json&list=categorymembers&cmtitle=Category:%s",
@@ -292,6 +282,7 @@ func GetCategoryMembers(mwURI, category string) ([]string, error) {
 	return titles, err
 }
 
+// GetExternalLinks returns a list of external links used on a page.
 func GetExternalLinks(mwURI, pageTitle string) ([]string, error) {
 	u := fmt.Sprintf("%s/api.php?action=parse&format=json&page=%s&prop=externallinks", mwURI, pageTitle)
 	resp, err := http.Get(u)
@@ -311,6 +302,7 @@ func GetExternalLinks(mwURI, pageTitle string) ([]string, error) {
 	return data.Parse.ExternalLinks, nil
 }
 
+// GetUsers returns a list of all users.
 func GetUsers(mwURI string) ([]string, error) {
 	params := url.Values{}
 	params.Set("action", "query")
